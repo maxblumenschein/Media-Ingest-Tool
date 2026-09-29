@@ -1,0 +1,1741 @@
+{"info":{
+   "version":"3.1", 
+   "year":"2026",
+   "comments": [ "Use option -p|--pattern in order to display unquoted pattern and regex of json file."],
+   "changeLog": [ "BagIt file format is valid for TBM.", "a32: Analoges Bildarchiv (Y) ->Böcklin-Archiv (Y)"]
+   },
+   "includeDirs":"%5E.%2As-%28%5Ba-z0-9%5D%7B1%2C%7D-%29%2Abag%24",
+   "pattern":"%5E%28%28%3FP%3Cowner%3E%5CS%7B1%7D%29%28%3FP%3CareaCategory%3E%28%3F%3D%5Bow%5D%29%28%5Bow%5D%5Cd%7B1%7D%5Cw%7B1%7D%29%7C%28%5Cw%7B1%7D%5Cd%7B2%7D%29%29_%28%3FP%3Cids%3E%28%3F%3A%5Barlpsvz%5Cd%5D%3F%28%3F%3A%5Cd%7B6%7D%28%3F%3A-%5Barlpsvz0-9%5D%5Cd%7B6%7D%29%7B0%2C23%7D%3F%29%2B_%3F%29%29%3F%28%3FP%3Cdate%3E%28%5B%5Cdx%5D%7B4%7D%29-%28%5B%5Cdx%5D%7B2%7D%29-%28%5B%5Cdx%5D%7B2%7D%29%29%28%3FP%3Ctext%3E%28%3F%3A%28%3F%21_s-%29_%5Ba-z0-9-%5D%7B1%2C%7D%29%29%3F%28%28%3FP%3CsuffixExt%3E%28%3F%3A_s-%28%5Ba-z0-9%5D%7B1%2C%7D-%29%2Abag%29%29%7C%28%3FP%3Csuffix%3E%28%3F%3A_s-%28%3F%21-%29%28%3F%21.%2A--%29%5Ba-z0-9-%5D%7B1%2C%7D%29%29%3F%28%3FP%3Cextension%3E%5C.%5Ba-z0-9%5D%7B2%2C4%7D%29%29%29%24",
+   "rules":[
+       {"regex":"%5E.%7B1%2C80%7D%24","error":"Der Dateiname darf inkl. Dateiendung nicht mehr als 80 Zeichen enthalten."},
+       {"regex":"%5E%5Ba-z0-9_%5C-%5D%2A%28s-%28%5Ba-z0-9%5D%7B1%2C%7D-%29%2Abag%7C%5C.%5Ba-z0-9_%5C-%5D%2A%24%29",
+        "error":"Der Dateiname enthält ungültige Zeichen",
+        "onError": [
+           {"regex":"%28%3FP%3Cbefore%3E.%2A%29%28%3FP%3Cerror%3E%5BA-Z%5D%2B%29%28%3FP%3Cafter%3E.%2A%29","error":"Grossbuchstaben vorhanden!"},
+           {"regex":"%28%3FP%3Cbefore%3E.%2A%29%28%3FP%3Cerror%3E%5B%C3%A4-%C3%BC%5D%29%28%3FP%3Cafter%3E.%2A%29","error":"Umlaute vorhanden!"},
+           {"regex":"%28%3FP%3Cbefore%3E.%2A%29%28%3FP%3Cerror%3E%5Cs%29%28%3FP%3Cafter%3E.%2A%29","error":"Leerzeichen vorhanden!"},
+           {"regex":"%28%3FP%3Cbefore%3E%5E.%2A%29%28%3FP%3Cerror%3E%5C.%29%28%3FP%3Cafter%3E.%2A%5C.%5Ba-z%5D%7B2%2C4%7D%24%29","error":"Der Punkt darf nur als Trennzeichen für die Dateiendung verwendet werden!"}
+        ]},
+       {"regex":"%5E%5Ba-tx%5D.%2A%24","error":"Das erste Zeichen (Eigentümer) ist ungültig."},
+       {"regex":"%5E.%5Bwrodpabs%5D%5B0-9%5D%5Ba-z0-9%5D.%2A%24","error":"Die Kategorie (2.-4. Zeichen) ist ungültig."},
+       {"regex":"%5E%28%28%5CS%7B4%7D%29_%28%3FP%3Cids%3E%28%3F%3A%5Barlpsvz%5Cd%5D%3F%28%3F%3A%5Cd%7B6%7D%28%3F%3A-%5Barlpsvz0-9%5D%5Cd%7B6%7D%29%7B0%2C23%7D%3F%29%2B_%3F%29%29%3F%28%3FP%3Cdate%3E%28%5B%5Cdx%5D%7B4%7D%29-%28%5B%5Cdx%5D%7B2%7D%29-%28%5B%5Cdx%5D%7B2%7D%29%29%28.%2A%29%29%24",
+	"error":"Objektreferenz!",
+	"onError": [{"regex":"%28%3FP%3Cbefore%3E%5E.%7B4%7D_%29%28%3FP%3Cerror%3E%5Bb-km-oq%5D%29%28%3FP%3Cafter%3E.%2A%29","error": "Das Präfix der Objektreferenz ist ungültig."}]
+       },
+       {"regex":"%5E.%7B4%7D_.%2A%24","error":"Das 5. Zeichen muss ein Unterstrich sein."},
+       {"regex":"%5E%28%3F%3A%5B%5E_%5D%2A_%29%7B2%2C5%7D%5B%5E_%5D%2A%24","error":"Der Dateiname muss 2 bis 5 Unterstriche enthalten."},
+       {"regex":"%5E.%2A%28s-%28%5Ba-z0-9%5D%7B1%2C%7D-%29%2Abag%24%7C%5C.%28%5Ba-z0-9%5D%7B2%2C4%7D%29%24%29","error":"Die Dateiendung muss aus 2-4 Zeichen bestehen."}
+    ],
+    "content":{
+         "owner": {
+             "t": "Technischer Dienst",
+             "l": "Digitale Kommunikation",
+             "c": "Kommunikation",
+             "h": "Emanuel Hoffmann-Stiftung",
+             "k": "Kupferstichkabinett",
+             "x": "Temporär",
+             "d": "Digitale Anwendungen",
+             "q": "Provenienzforschung",
+             "i": "Sammlung Im Obersteg",
+             "a": "Archiv/Dokumentation",
+             "p": "Programme, Bildung & Vermittlung",
+             "b": "Bibliothek",
+             "r": "Restaurierung",
+             "m": "Marketing & Outreach",
+             "o": "Finanzen & Operations",
+             "f": "Gegenwart",
+             "g": "Galerie",
+             "s": "Shop",
+             "e": "Externe Daten- und Werkeigentümer (Leihgeber, z.T. restricted, Deaquisition; Art Care)"
+         },
+         "area":{
+            "r": "Werkdokumentation (Restaurierung)",
+            "w": "Werkabbildungen",
+            "o": "Originalwerk",
+            "p": "Publikationen / Marketing",
+            "a": "Archiv",
+            "s": "Shop",
+            "b": "Bibliothek",
+            "d": "Dokumentation"
+         },
+         "areaCategory":{
+            "d82": "Oral History",
+            "d65": "Gebäude Neubau Aussenaufnahme",
+            "o4a": "Sichtungskopie Audio",
+            "d34": "Medienanlass",
+            "b11": "Organisation",
+            "p13": "Katalog (Ausstellung, Sammlung)",
+            "d72": "Panoramabild Einzelaufnahmen",
+            "p29": "Diverses (Gutscheine, Kleber usw.)",
+            "d23": "Saaltext",
+            "r32": "Produktion",
+            "r35": "Echtheitszertifikate",
+            "b24": "Öffentlichkeitsarbeit",
+            "p54": "LED Fries (Inhalte)",
+            "w11": "Hero Image (Standard-/Hauptansicht eines Werkes)",
+            "a27": "Bibliothek und Archiv (Q)",
+            "d37": "Mitarbeiteranlass",
+            "s13": "Kunstdruck (werkrepräsentierendes Objekt)",
+            "o3v": "Ausstellungskopie Video",
+            "d61": "Gebäude Hauptbau Aussenaufnahme",
+            "b22": "Literaturbestand extern",
+            "p24": "Banner / Fahnen",
+            "a36": "Assoziierte Bestände (Z)",
+            "d35": "Vernissage, Finissage",
+            "r13": "Schadensprotokoll",
+            "b01": "Eingangsbuch",
+            "p52": "Social-Media-Kanäle (Backup)",
+            "r14": "Restaurierungsprotokoll",
+            "a38": "Sammlung Im Obersteg",
+            "s15": "Merchandising Produkteaufnahme (für Online-Shop)",
+            "s11": "Postkarte (werkrepräsentierendes Objekt)",
+            "p21": "Flyer",
+            "d21": "Audioguide (Tondatei und ev. Text)",
+            "a16": "Versicherungen (J)",
+            "a03": "Tagebücher (D)",
+            "p12": "Booklet",
+            "p42": "Medienmitteilung",
+            "a25": "Gemäldegalerie (O)",
+            "d56": "Weitere Personen",
+            "d71": "Standortplan",
+            "r33": "Installation, Montierung, Verpackung, Transport",
+            "a23": "Vermittlung (M)",
+            "s14": "Merchandising allgemein",
+            "a32": "Böcklin-Archiv (Y)",
+            "a01": "Inventare (A)",
+            "d26": "Ausstellungspläne",
+            "a15": "Finanzen (I)",
+            "o3a": "Ausstellungskopie Audio",
+            "p51": "Website (Backup)",
+            "d67": "Aufnahmen Baudokumentation",
+            "o2a": "Archivmaster Audio",
+            "d63": "Gebäude Gegenwart Aussenaufnahme",
+            "p57": "Newsletter (extern)",
+            "p53": "Video (Eigenproduktion)",
+            "d64": "Gebäude Gegenwart Innenaufnahme",
+            "p11": "CD/CI (Logo, Manual, Schrift..)",
+            "d73": "Panoramabild final",
+            "b02": "Katalog",
+            "b25": "Vermittlung",
+            "o4v": "Sichtungskopie Video",
+            "a37": "Fremdbestände (z.B. für Quellenbelege Provenienzforschung)",
+            "d33": "Donatorenanlass",
+            "a28": "Externe Körperschaften (R)",
+            "r15": "Iteration Report",
+            "p22": "Einladungskarten",
+            "o2x": "Archivmaster weitere Medien",
+            "d51": "Mitarbeitende",
+            "p16": "Jahresprogramm",
+            "o4b": "Sichtungskopie Bild",
+            "d69": "Gebäudeaufnahmen  andere",
+            "a29": "Gegenwart (S)",
+            "d27": "Recherchematerial Kunstvermittler:innen",
+            "a22": "Publikationen/Öffentlichkeitsarbeit (L)",
+            "d66": "Gebäude Neubau Innenaufnahme",
+            "d25": "Werklabel",
+            "a13": "Personal (G)",
+            "d81": "Zubehör",
+            "o3x": "Ausstellungskopie weitere Medien",
+            "p17": "Jahresbericht",
+            "r34": "Zusatzdaten für technische Komponenten",
+            "p41": "Medienspiegel",
+            "a12": "Direktion und Sekretariat (F)",
+            "a14": "Bau und Mobiliar (H)",
+            "r12": "Zustandsprotokoll / Ersterfassung",
+            "p31": "Newsletter (intern)",
+            "b04": "Standortverzeichnis",
+            "d39": "Andere Veranstaltung",
+            "s12": "Plakat (werkrepräsentierendes Objekt)",
+            "a02": "Protokolle Kunstkommission (B)",
+            "d17": "Externe Ausstellung (Leihgaben)",
+	    "d15": "Vor-/Nachbereitung",
+            "r21": "Kartierung",
+            "a24": "Kasse und Verkauf (N)",
+            "o4x": "Sichtungskopie weitere Medien",
+            "d62": "Gebäude Hauptbau Innenaufnahmen",
+            "d36": "Preview",
+            "a21": "Ausstellungen (K)",
+            "d22": "Video",
+            "d24": "Wandtext",
+            "d38": "Kundenevent (privat)",
+            "d68": "Besucherplan, Situationsplan, Grundriss, Aufriss",
+            "a11": "Organisation (E)",
+            "b21": "Literaturbestand intern",
+            "b06": "Reglement, z.B. Bibliotheksordung",
+            "s16": "Editionen",
+            "d13": "Vor-/Nachbereitung",
+            "d85": "Diverses",
+            "d31": "Museumsveranstaltung (öffentlich)",
+            "d11": "Installationsansichten (Ausstellung, Sammlungs- und Werkpräsentation)",
+            "d32": "Workshop- und Führungsformate",
+            "b14": "Standards/Anleitungen",
+            "d54": "Künstler:innen",
+            "a26": "Kupferstichkabinett (P)",
+            "p23": "Plakat",
+            "p91": "Diverses",
+            "b27": "Fernleihe (temp.)",
+            "r22": "Lichtechtheit (z.B. MFT)",
+            "p15": "Signaletik",
+            "r11": "Dokumentation",
+            "o2v": "Archivmaster Video",
+            "o5v": "Still Video",
+            "r31": "Korrespondenz",
+            "r23": "Technischer Befund",
+            "o2b": "Archivmaster Bild"
+          },
+	  "o": {
+	   "1": "Ankaufmaster",
+	   "2": "Archivmaster",
+	   "3": "Ausstellungskopie",
+	   "4": "Sichtungskopie (viewing copy)",
+	   "5": "Still/Ausschnitt",
+	   "a": "Audio",
+	   "b": "Bild",
+	   "v": "Video",
+	   "x": "weitere Medien"
+          },
+          "w": {
+            "1": "Gesamtansicht",
+            "2": "Detailansicht (Ausschnitt)",
+            "3": "Teilansicht mehrteiliges Werk (Fragment)",
+            "4": "Zum Werk gehörende Objekte (kein Werk abgebildet)",
+            "a": "Auflicht (VIS)",
+            "s": "Streiflicht (VIS)",
+            "d": "Durchlicht (VIS)",
+            "u": "UV (Ultraviolettstrahlung)",
+            "i": "IRR (Infrarotstrahlung)",
+            "r": "XR (Röntgenstrahlung)",
+            "m": "Mikroskop",
+            "p": "Polynomial texture mapping (RTI)",
+            "x": "weitere Bildgebende Verfahren"
+         },
+         "mappingCategoryLabel":{
+            "w": "Aufnahmemethode",
+            "o": "Medium des Originalwerks"
+         },
+	 "suffixType": {
+      "bag": {
+        "label": "Dateiendung",
+        "text": "bag"
+    },
+    "m8": {
+        "label": "Datenträger",
+        "text": "Datenträger 8"
+    },
+    "v20": {
+        "label": "Vitrine",
+        "text": "Vitrine 20"
+    },
+    "m1": {
+        "label": "Datenträger",
+        "text": "Datenträger 1"
+    },
+    "nb": {
+        "label": "Gebäude",
+        "text": "Neubau"
+    },
+    "cs4": {
+        "label": "Kanal",
+        "text": "Kanal Silent 4"
+    },
+    "r31": {
+        "label": "Raum",
+        "text": "Raum 31"
+    },
+    "v1": {
+        "label": "Vitrine",
+        "text": "Vitrine 1"
+    },
+    "sw5": {
+        "label": "Stellwand",
+        "text": "Stellwand 5"
+    },
+    "r5": {
+        "label": "Raum",
+        "text": "Raum 5"
+    },
+    "cf1": {
+        "label": "Kanal",
+        "text": "Kanal Französisch 1"
+    },
+    "r6": {
+        "label": "Raum",
+        "text": "Raum 6"
+    },
+    "v3": {
+        "label": "Vitrine",
+        "text": "Vitrine 3"
+    },
+    "ce3": {
+        "label": "Kanal",
+        "text": "Kanal Englisch 3"
+    },
+    "r18": {
+        "label": "Raum",
+        "text": "Raum 18"
+    },
+    "vr": {
+        "label": "Abbildungsperspektive",
+        "text": "Recto (Vorderseite)"
+    },
+    "ce": {
+        "label": "Kanalton",
+        "text": "Englischer Kanal"
+    },
+    "cf4": {
+        "label": "Kanal",
+        "text": "Kanal Französisch 4"
+    },
+    "m18": {
+        "label": "Datenträger",
+        "text": "Datenträger 18"
+    },
+    "sw7": {
+        "label": "Stellwand",
+        "text": "Stellwand 7"
+    },
+    "m2": {
+        "label": "Datenträger",
+        "text": "Datenträger 2"
+    },
+    "r1": {
+        "label": "Raum",
+        "text": "Raum 1"
+    },
+    "r24": {
+        "label": "Raum",
+        "text": "Raum 24"
+    },
+    "arkaden": {
+        "label": "Raum",
+        "text": "Arkaden (HB)"
+    },
+    "dr": {
+        "label": "Detail",
+        "text": "Rahmen"
+    },
+    "kleinerinnenhof": {
+        "label": "Raum",
+        "text": "Kleiner Innenhof"
+    },
+    "rn": {
+        "label": "Auflösung bei Reproduktionen",
+        "text": "Digitalisiertes Negativ"
+    },
+    "ce5": {
+        "label": "Kanal",
+        "text": "Kanal Englisch 5"
+    },
+    "eingang": {
+        "label": "Raum",
+        "text": "Eingangsbereich (NB)"
+    },
+    "s19": {
+        "label": "Sockel",
+        "text": "Sockel 19"
+    },
+    "m9": {
+        "label": "Datenträger",
+        "text": "Datenträger 9"
+    },
+    "ce2": {
+        "label": "Kanal",
+        "text": "Kanal Englisch 2"
+    },
+    "cs5": {
+        "label": "Kanal",
+        "text": "Kanal Silent 5"
+    },
+    "m3": {
+        "label": "Datenträger",
+        "text": "Datenträger 3"
+    },
+    "zv": {
+        "label": "Zustand",
+        "text": "Vorzustand"
+    },
+    "cd": {
+        "label": "Kanalton",
+        "text": "Deutscher Kanal"
+    },
+    "r28": {
+        "label": "Raum",
+        "text": "Raum 28"
+    },
+    "cd2": {
+        "label": "Kanal",
+        "text": "Kanal Deutsch 2"
+    },
+    "m19": {
+        "label": "Datenträger",
+        "text": "Datenträger 19"
+    },
+    "s14": {
+        "label": "Sockel",
+        "text": "Sockel 14"
+    },
+    "r27": {
+        "label": "Raum",
+        "text": "Raum 27"
+    },
+    "wc": {
+        "label": "Raum",
+        "text": "Toilette"
+    },
+    "r4": {
+        "label": "Raum",
+        "text": "Raum 4"
+    },
+    "c0": {
+        "label": "Kanalton",
+        "text": "Ohne Ton (Null)"
+    },
+    "cs2": {
+        "label": "Kanal",
+        "text": "Kanal Silent 2"
+    },
+    "cb": {
+        "label": "Farbverbindlichkeit",
+        "text": "farbkalibriert mit abgebildeter Farbreferenz"
+    },
+    "u2": {
+        "label": "Stockwerk",
+        "text": "Untergeschoss 2"
+    },
+    "v2": {
+        "label": "Vitrine",
+        "text": "Vitrine 2"
+    },
+    "cf": {
+        "label": "Kanalton",
+        "text": "Französischer Kanal"
+    },
+    "w5": {
+        "label": "Wand",
+        "text": "Wand 5"
+    },
+    "s18": {
+        "label": "Sockel",
+        "text": "Sockel 18"
+    },
+    "s5": {
+        "label": "Sockel",
+        "text": "Sockel 5"
+    },
+    "r29": {
+        "label": "Raum",
+        "text": "Raum 29"
+    },
+    "ca": {
+        "label": "Farbverbindlichkeit",
+        "text": "farbkalibriert"
+    },
+    "r9": {
+        "label": "Raum",
+        "text": "Raum 9"
+    },
+    "s10": {
+        "label": "Sockel",
+        "text": "Sockel 10"
+    },
+    "sw3": {
+        "label": "Stellwand",
+        "text": "Stellwand 3"
+    },
+    "v17": {
+        "label": "Vitrine",
+        "text": "Vitrine 17"
+    },
+    "db": {
+        "label": "Detail",
+        "text": "Beschriftung"
+    },
+    "r26": {
+        "label": "Raum",
+        "text": "Raum 26"
+    },
+    "r2": {
+        "label": "Raum",
+        "text": "Raum 2"
+    },
+    "cx": {
+        "label": "Farbverbindlichkeit",
+        "text": "nicht farbkalibriert oder unbekannt"
+    },
+    "sw6": {
+        "label": "Stellwand",
+        "text": "Stellwand 6"
+    },
+    "cd4": {
+        "label": "Kanal",
+        "text": "Kanal Deutsch 4"
+    },
+    "s9": {
+        "label": "Sockel",
+        "text": "Sockel 9"
+    },
+    "sw1": {
+        "label": "Stellwand",
+        "text": "Stellwand 1"
+    },
+    "m17": {
+        "label": "Datenträger",
+        "text": "Datenträger 17"
+    },
+    "r16": {
+        "label": "Raum",
+        "text": "Raum 16"
+    },
+    "sx": {
+        "label": "Aufnahmespektrum",
+        "text": "Weitere Spektren"
+    },
+    "s4": {
+        "label": "Sockel",
+        "text": "Sockel 4"
+    },
+    "r11": {
+        "label": "Raum",
+        "text": "Raum 11"
+    },
+    "vx": {
+        "label": "Abbildungsperspektive",
+        "text": "weitere Ansichten"
+    },
+    "v15": {
+        "label": "Vitrine",
+        "text": "Vitrine 15"
+    },
+    "v6": {
+        "label": "Vitrine",
+        "text": "Vitrine 6"
+    },
+    "kabinett": {
+        "label": "Raum",
+        "text": "Kabinetträume"
+    },
+    "rs": {
+        "label": "Auflösung bei Reproduktionen",
+        "text": "Digitalisiertes Dia (Reproduktion ab Slide/Ekta)"
+    },
+    "r25": {
+        "label": "Raum",
+        "text": "Raum 25"
+    },
+    "vestibuel": {
+        "label": "Raum",
+        "text": "Vestibül"
+    },
+    "w2": {
+        "label": "Wand",
+        "text": "Wand 2"
+    },
+    "s17": {
+        "label": "Sockel",
+        "text": "Sockel 17"
+    },
+    "m13": {
+        "label": "Datenträger",
+        "text": "Datenträger 13"
+    },
+    "v19": {
+        "label": "Vitrine",
+        "text": "Vitrine 19"
+    },
+    "m16": {
+        "label": "Datenträger",
+        "text": "Datenträger 16"
+    },
+    "dx": {
+        "label": "Detail",
+        "text": "Weitere"
+    },
+    "m4": {
+        "label": "Datenträger",
+        "text": "Datenträger 4"
+    },
+    "v5": {
+        "label": "Vitrine",
+        "text": "Vitrine 5"
+    },
+    "cnull3": {
+        "label": "Kanal",
+        "text": "Kanal ohne Ton 3"
+    },
+    "lesesaal": {
+        "label": "Raum",
+        "text": "Lesesaal"
+    },
+    "w8": {
+        "label": "Wand",
+        "text": "Wand 8"
+    },
+    "m": {
+        "label": "Archivmaster",
+        "text": "Archivmaster"
+    },
+    "gh": {
+        "label": "Raum",
+        "text": "Grosser Hofumgang"
+    },
+    "zg": {
+        "label": "Stockwerk",
+        "text": "Zwischengeschoss"
+    },
+    "r22": {
+        "label": "Raum",
+        "text": "Raum 22"
+    },
+    "asv": {
+        "label": "Aufnahmespektrum",
+        "text": "Sichtbares Spektrum 400-700 nm"
+    },
+    "v18": {
+        "label": "Vitrine",
+        "text": "Vitrine 18"
+    },
+    "w6": {
+        "label": "Wand",
+        "text": "Wand 6"
+    },
+    "s11": {
+        "label": "Sockel",
+        "text": "Sockel 11"
+    },
+    "m6": {
+        "label": "Datenträger",
+        "text": "Datenträger 6"
+    },
+    "bistro": {
+        "label": "Raum",
+        "text": "Bistro"
+    },
+    "aussen": {
+        "label": "Raum",
+        "text": "Aussen"
+    },
+    "innenhof": {
+        "label": "Raum",
+        "text": "Grosser Innenhof"
+    },
+    "zz": {
+        "label": "Zustand",
+        "text": "Zwischenzustand"
+    },
+    "r3": {
+        "label": "Raum",
+        "text": "Raum 3"
+    },
+    "cnull4": {
+        "label": "Kanal",
+        "text": "Kanal ohne Ton 4"
+    },
+    "r30": {
+        "label": "Raum",
+        "text": "Raum 30"
+    },
+    "r23": {
+        "label": "Raum",
+        "text": "Raum 23"
+    },
+    "r7": {
+        "label": "Raum",
+        "text": "Raum 7"
+    },
+    "e3": {
+        "label": "Stockwerk",
+        "text": "Etage 3"
+    },
+    "sw4": {
+        "label": "Stellwand",
+        "text": "Stellwand 4"
+    },
+    "m7": {
+        "label": "Datenträger",
+        "text": "Datenträger 7"
+    },
+    "s13": {
+        "label": "Sockel",
+        "text": "Sockel 13"
+    },
+    "magazin": {
+        "label": "Raum",
+        "text": "Magazin"
+    },
+    "m20": {
+        "label": "Datenträger",
+        "text": "Datenträger 20"
+    },
+    "vortragssaal": {
+        "label": "Raum",
+        "text": "Vortragssaal"
+    },
+    "r21": {
+        "label": "Raum",
+        "text": "Raum 21"
+    },
+    "r8": {
+        "label": "Raum",
+        "text": "Raum 8"
+    },
+    "sw10": {
+        "label": "Stellwand",
+        "text": "Stellwand 10"
+    },
+    "lb": {
+        "label": "Gebäude",
+        "text": "Laurenzbau"
+    },
+    "ce4": {
+        "label": "Kanal",
+        "text": "Kanal Englisch 4"
+    },
+    "sw8": {
+        "label": "Stellwand",
+        "text": "Stellwand 8"
+    },
+    "ra": {
+        "label": "Auflösung bei Reproduktionen",
+        "text": "Reproduktion in Originalgrösse (dpi)"
+    },
+    "s12": {
+        "label": "Sockel",
+        "text": "Sockel 12"
+    },
+    "asr": {
+        "label": "Aufnahmespektrum",
+        "text": "Röntgen Spektrum"
+    },
+    "v11": {
+        "label": "Vitrine",
+        "text": "Vitrine 11"
+    },
+    "m15": {
+        "label": "Datenträger",
+        "text": "Datenträger 15"
+    },
+    "cf3": {
+        "label": "Kanal",
+        "text": "Kanal Französisch 3"
+    },
+    "kh": {
+        "label": "Raum",
+        "text": "Kleiner Hofumgang"
+    },
+    "dt": {
+        "label": "Detail",
+        "text": "Träger"
+    },
+    "s7": {
+        "label": "Sockel",
+        "text": "Sockel 7"
+    },
+    "cf5": {
+        "label": "Kanal",
+        "text": "Kanal Französisch 5"
+    },
+    "m11": {
+        "label": "Datenträger",
+        "text": "Datenträger 11"
+    },
+    "w10": {
+        "label": "Wand",
+        "text": "Wand 10"
+    },
+    "garderobe": {
+        "label": "Raum",
+        "text": "Garderobe"
+    },
+    "r15": {
+        "label": "Raum",
+        "text": "Raum 15"
+    },
+    "cnull1": {
+        "label": "Kanal",
+        "text": "Kanal ohne Ton 1"
+    },
+    "sw9": {
+        "label": "Stellwand",
+        "text": "Stellwand 9"
+    },
+    "cnull5": {
+        "label": "Kanal",
+        "text": "Kanal ohne Ton 5"
+    },
+    "w7": {
+        "label": "Wand",
+        "text": "Wand 7"
+    },
+    "aufzug": {
+        "label": "Raum",
+        "text": "Aufzug"
+    },
+    "s8": {
+        "label": "Sockel",
+        "text": "Sockel 8"
+    },
+    "v12": {
+        "label": "Vitrine",
+        "text": "Vitrine 12"
+    },
+    "v8": {
+        "label": "Vitrine",
+        "text": "Vitrine 8"
+    },
+    "w3": {
+        "label": "Wand",
+        "text": "Wand 3"
+    },
+    "r17": {
+        "label": "Raum",
+        "text": "Raum 17"
+    },
+    "e2": {
+        "label": "Stockwerk",
+        "text": "Etage 2"
+    },
+    "m12": {
+        "label": "Datenträger",
+        "text": "Datenträger 12"
+    },
+    "dw": {
+        "label": "Detail",
+        "text": "Wasserzeichen"
+    },
+    "atelier": {
+        "label": "Raum",
+        "text": "Atelier"
+    },
+    "cd5": {
+        "label": "Kanal",
+        "text": "Kanal Deutsch 5"
+    },
+    "v7": {
+        "label": "Vitrine",
+        "text": "Vitrine 7"
+    },
+    "s20": {
+        "label": "Sockel",
+        "text": "Sockel 20"
+    },
+    "v10": {
+        "label": "Vitrine",
+        "text": "Vitrine 10"
+    },
+    "u1": {
+        "label": "Stockwerk",
+        "text": "Untergeschoss 1"
+    },
+    "w1": {
+        "label": "Wand",
+        "text": "Wand 1"
+    },
+    "m10": {
+        "label": "Datenträger",
+        "text": "Datenträger 10"
+    },
+    "hb": {
+        "label": "Gebäude",
+        "text": "Hauptbau"
+    },
+    "cd3": {
+        "label": "Kanal",
+        "text": "Kanal Deutsch 3"
+    },
+    "cnull2": {
+        "label": "Kanal",
+        "text": "Kanal ohne Ton 2"
+    },
+    "r10": {
+        "label": "Raum",
+        "text": "Raum 10"
+    },
+    "m5": {
+        "label": "Datenträger",
+        "text": "Datenträger 5"
+    },
+    "v13": {
+        "label": "Vitrine",
+        "text": "Vitrine 13"
+    },
+    "v14": {
+        "label": "Vitrine",
+        "text": "Vitrine 14"
+    },
+    "kasse": {
+        "label": "Raum",
+        "text": "Kasse"
+    },
+    "e1": {
+        "label": "Stockwerk",
+        "text": "Etage 1"
+    },
+    "r20": {
+        "label": "Raum",
+        "text": "Raum 20"
+    },
+    "vv": {
+        "label": "Abbildungsperspektive",
+        "text": "Verso (Rückseite)"
+    },
+    "cs1": {
+        "label": "Kanal",
+        "text": "Kanal Silent 1"
+    },
+    "s16": {
+        "label": "Sockel",
+        "text": "Sockel 16"
+    },
+    "treppe": {
+        "label": "Raum",
+        "text": "Treppe (gemeint ist immer die Treppe, die hochgeht)"
+    },
+    "ce1": {
+        "label": "Kanal",
+        "text": "Kanal Englisch 1"
+    },
+    "r12": {
+        "label": "Raum",
+        "text": "Raum 12"
+    },
+    "zn": {
+        "label": "Zustand",
+        "text": "Nachzustand"
+    },
+    "s2": {
+        "label": "Sockel",
+        "text": "Sockel 2"
+    },
+    "r19": {
+        "label": "Raum",
+        "text": "Raum 19"
+    },
+    "r13": {
+        "label": "Raum",
+        "text": "Raum 13"
+    },
+    "sw2": {
+        "label": "Stellwand",
+        "text": "Stellwand 2"
+    },
+    "e0": {
+        "label": "Stockwerk",
+        "text": "Erdgeschoss"
+    },
+    "shop": {
+        "label": "Raum",
+        "text": "Shop"
+    },
+    "asu": {
+        "label": "Aufnahmespektrum",
+        "text": "Ultraviolettes Spektrum bis 400 nm"
+    },
+    "w4": {
+        "label": "Wand",
+        "text": "Wand 4"
+    },
+    "r14": {
+        "label": "Raum",
+        "text": "Raum 14"
+    },
+    "v4": {
+        "label": "Vitrine",
+        "text": "Vitrine 4"
+    },
+    "e4": {
+        "label": "Stockwerk",
+        "text": "Etage 4"
+    },
+    "ds": {
+        "label": "Detail",
+        "text": "Signatur"
+    },
+    "rx": {
+        "label": "Auflösung bei Reproduktionen",
+        "text": "unbekannt / abweichende Standards"
+    },
+    "w9": {
+        "label": "Wand",
+        "text": "Wand 9"
+    },
+    "gw": {
+        "label": "Gebäude",
+        "text": "Gegenwart"
+    },
+    "cd1": {
+        "label": "Kanal",
+        "text": "Kanal Deutsch 1"
+    },
+    "cs": {
+        "label": "Kanalton",
+        "text": "Silent Kanal (Stumm mit Geräuschen)"
+    },
+    "s3": {
+        "label": "Sockel",
+        "text": "Sockel 3"
+    },
+    "cf2": {
+        "label": "Kanal",
+        "text": "Kanal Französisch 2"
+    },
+    "s15": {
+        "label": "Sockel",
+        "text": "Sockel 15"
+    },
+    "s6": {
+        "label": "Sockel",
+        "text": "Sockel 6"
+    },
+    "v9": {
+        "label": "Vitrine",
+        "text": "Vitrine 9"
+    },
+    "asi": {
+        "label": "Aufnahmespektrum",
+        "text": "Infrarotes Spektrum ab 700 nm"
+    },
+    "v16": {
+        "label": "Vitrine",
+        "text": "Vitrine 16"
+    },
+    "cs3": {
+        "label": "Kanal",
+        "text": "Kanal Silent 3"
+    },
+    "foyer": {
+        "label": "Raum",
+        "text": "Foyer"
+    },
+    "s1": {
+        "label": "Sockel",
+        "text": "Sockel 1"
+    },
+    "depot": {
+        "label": "Raum",
+        "text": "Depoträume"
+    },
+    "m14": {
+        "label": "Datenträger",
+        "text": "Datenträger 14"
+    },
+    "wo": {
+        "label": "Sprache",
+        "text": "Wolof"
+    },
+    "ar": {
+        "label": "Sprache",
+        "text": "Arabisch"
+    },
+    "om": {
+        "label": "Sprache",
+        "text": "Oromo"
+    },
+    "km": {
+        "label": "Sprache",
+        "text": "Kambodschanisch"
+    },
+    "cs": {
+        "label": "Sprache",
+        "text": "Tschechisch"
+    },
+    "gl": {
+        "label": "Sprache",
+        "text": "Galicisch"
+    },
+    "ve": {
+        "label": "Sprache",
+        "text": "Venda"
+    },
+    "sd": {
+        "label": "Sprache",
+        "text": "Sardisch"
+    },
+    "sg": {
+        "label": "Sprache",
+        "text": "Sango"
+    },
+    "jv": {
+        "label": "Sprache",
+        "text": "Javanisch"
+    },
+    "cy": {
+        "label": "Sprache",
+        "text": "Walisisch"
+    },
+    "cu": {
+        "label": "Sprache",
+        "text": "Altkirchenslawisch"
+    },
+    "kw": {
+        "label": "Sprache",
+        "text": "Kornisch"
+    },
+    "ty": {
+        "label": "Sprache",
+        "text": "Tahitisch"
+    },
+    "he": {
+        "label": "Sprache",
+        "text": "Hebräisch"
+    },
+    "or": {
+        "label": "Sprache",
+        "text": "Oriya"
+    },
+    "co": {
+        "label": "Sprache",
+        "text": "Korsisch"
+    },
+    "gn": {
+        "label": "Sprache",
+        "text": "Guarani"
+    },
+    "bs": {
+        "label": "Sprache",
+        "text": "Bosnisch"
+    },
+    "ps": {
+        "label": "Sprache",
+        "text": "Paschtu"
+    },
+    "tk": {
+        "label": "Sprache",
+        "text": "Turkmenisch"
+    },
+    "kl": {
+        "label": "Sprache",
+        "text": "Grönländisch"
+    },
+    "uk": {
+        "label": "Sprache",
+        "text": "Ukrainisch"
+    },
+    "kg": {
+        "label": "Sprache",
+        "text": "Kongo"
+    },
+    "ca": {
+        "label": "Sprache",
+        "text": "Katalanisch"
+    },
+    "ku": {
+        "label": "Sprache",
+        "text": "Kurdisch"
+    },
+    "sl": {
+        "label": "Sprache",
+        "text": "Slowenisch"
+    },
+    "nl": {
+        "label": "Sprache",
+        "text": "Niederländisch"
+    },
+    "ce": {
+        "label": "Sprache",
+        "text": "Tschetschenisch"
+    },
+    "ko": {
+        "label": "Sprache",
+        "text": "Koreanisch"
+    },
+    "ur": {
+        "label": "Sprache",
+        "text": "Urdu"
+    },
+    "fj": {
+        "label": "Sprache",
+        "text": "Fidschi"
+    },
+    "gu": {
+        "label": "Sprache",
+        "text": "Gujarati"
+    },
+    "lv": {
+        "label": "Sprache",
+        "text": "Lettisch"
+    },
+    "ha": {
+        "label": "Sprache",
+        "text": "Hausa"
+    },
+    "qu": {
+        "label": "Sprache",
+        "text": "Quechua"
+    },
+    "oc": {
+        "label": "Sprache",
+        "text": "Okzitanisch"
+    },
+    "el": {
+        "label": "Sprache",
+        "text": "Griechisch"
+    },
+    "na": {
+        "label": "Sprache",
+        "text": "Nauruisch"
+    },
+    "an": {
+        "label": "Sprache",
+        "text": "Aragonesisch"
+    },
+    "ik": {
+        "label": "Sprache",
+        "text": "Inupiaq"
+    },
+    "dv": {
+        "label": "Sprache",
+        "text": "Maledivisch"
+    },
+    "sn": {
+        "label": "Sprache",
+        "text": "Shona"
+    },
+    "ay": {
+        "label": "Sprache",
+        "text": "Aymara"
+    },
+    "ro": {
+        "label": "Sprache",
+        "text": "Rumänisch"
+    },
+    "pt": {
+        "label": "Sprache",
+        "text": "Portugiesisch"
+    },
+    "cv": {
+        "label": "Sprache",
+        "text": "Tschuwaschisch"
+    },
+    "sv": {
+        "label": "Sprache",
+        "text": "Schwedisch"
+    },
+    "la": {
+        "label": "Sprache",
+        "text": "Lateinisch"
+    },
+    "ss": {
+        "label": "Sprache",
+        "text": "Swati"
+    },
+    "lu": {
+        "label": "Sprache",
+        "text": "Luba-Katanga"
+    },
+    "mt": {
+        "label": "Sprache",
+        "text": "Maltesisch"
+    },
+    "ie": {
+        "label": "Sprache",
+        "text": "Interlingue"
+    },
+    "ee": {
+        "label": "Sprache",
+        "text": "Ewe"
+    },
+    "ne": {
+        "label": "Sprache",
+        "text": "Nepalesisch"
+    },
+    "aa": {
+        "label": "Sprache",
+        "text": "Afar"
+    },
+    "mi": {
+        "label": "Sprache",
+        "text": "Maori"
+    },
+    "sk": {
+        "label": "Sprache",
+        "text": "Slowakisch"
+    },
+    "rm": {
+        "label": "Sprache",
+        "text": "Rätoromanisch"
+    },
+    "uz": {
+        "label": "Sprache",
+        "text": "Usbekisch"
+    },
+    "li": {
+        "label": "Sprache",
+        "text": "Limburgisch"
+    },
+    "bi": {
+        "label": "Sprache",
+        "text": "Bislama"
+    },
+    "hy": {
+        "label": "Sprache",
+        "text": "Armenisch"
+    },
+    "hz": {
+        "label": "Sprache",
+        "text": "Herero"
+    },
+    "to": {
+        "label": "Sprache",
+        "text": "Tongaisch"
+    },
+    "bg": {
+        "label": "Sprache",
+        "text": "Bulgarisch"
+    },
+    "ba": {
+        "label": "Sprache",
+        "text": "Baschkirisch"
+    },
+    "es": {
+        "label": "Sprache",
+        "text": "Spanisch"
+    },
+    "zh": {
+        "label": "Sprache",
+        "text": "Chinesisch"
+    },
+    "ng": {
+        "label": "Sprache",
+        "text": "Ndonga"
+    },
+    "tt": {
+        "label": "Sprache",
+        "text": "Tatarisch"
+    },
+    "id": {
+        "label": "Sprache",
+        "text": "Indonesisch"
+    },
+    "ja": {
+        "label": "Sprache",
+        "text": "Japanisch"
+    },
+    "fi": {
+        "label": "Sprache",
+        "text": "Finnisch"
+    },
+    "wa": {
+        "label": "Sprache",
+        "text": "Wallonisch"
+    },
+    "ga": {
+        "label": "Sprache",
+        "text": "Irisch"
+    },
+    "fr": {
+        "label": "Sprache",
+        "text": "Französisch"
+    },
+    "yi": {
+        "label": "Sprache",
+        "text": "Jiddisch"
+    },
+    "nr": {
+        "label": "Sprache",
+        "text": "Nyanja"
+    },
+    "kr": {
+        "label": "Sprache",
+        "text": "Kanuri"
+    },
+    "hu": {
+        "label": "Sprache",
+        "text": "Ungarisch"
+    },
+    "am": {
+        "label": "Sprache",
+        "text": "Amharisch"
+    },
+    "ak": {
+        "label": "Sprache",
+        "text": "Akan"
+    },
+    "et": {
+        "label": "Sprache",
+        "text": "Estnisch"
+    },
+    "pa": {
+        "label": "Sprache",
+        "text": "Pandschabi"
+    },
+    "dz": {
+        "label": "Sprache",
+        "text": "Dzongkha"
+    },
+    "bm": {
+        "label": "Sprache",
+        "text": "Bambara"
+    },
+    "bn": {
+        "label": "Sprache",
+        "text": "Bengalisch"
+    },
+    "ae": {
+        "label": "Sprache",
+        "text": "Avestisch"
+    },
+    "de": {
+        "label": "Sprache",
+        "text": "Deutsch"
+    },
+    "oj": {
+        "label": "Sprache",
+        "text": "Ojibwe"
+    },
+    "io": {
+        "label": "Sprache",
+        "text": "Ido"
+    },
+    "nv": {
+        "label": "Sprache",
+        "text": "Navajo"
+    },
+    "ch": {
+        "label": "Sprache",
+        "text": "Chamorro"
+    },
+    "hi": {
+        "label": "Sprache",
+        "text": "Hindi"
+    },
+    "sr": {
+        "label": "Sprache",
+        "text": "Serbisch"
+    },
+    "th": {
+        "label": "Sprache",
+        "text": "Thailändisch"
+    },
+    "tl": {
+        "label": "Sprache",
+        "text": "Tagalog"
+    },
+    "mg": {
+        "label": "Sprache",
+        "text": "Malagasy"
+    },
+    "xh": {
+        "label": "Sprache",
+        "text": "Xhosa"
+    },
+    "sm": {
+        "label": "Sprache",
+        "text": "Samoanisch"
+    },
+    "hr": {
+        "label": "Sprache",
+        "text": "Kroatisch"
+    },
+    "se": {
+        "label": "Sprache",
+        "text": "Nordsamisch"
+    },
+    "sq": {
+        "label": "Sprache",
+        "text": "Albanisch"
+    },
+    "af": {
+        "label": "Sprache",
+        "text": "Afrikaans"
+    },
+    "iu": {
+        "label": "Sprache",
+        "text": "Inuktitut"
+    },
+    "av": {
+        "label": "Sprache",
+        "text": "Awarisch"
+    },
+    "ki": {
+        "label": "Sprache",
+        "text": "Kikuyu"
+    },
+    "as": {
+        "label": "Sprache",
+        "text": "Assamesisch"
+    },
+    "ia": {
+        "label": "Sprache",
+        "text": "Interlingua"
+    },
+    "tg": {
+        "label": "Sprache",
+        "text": "Tadschikisch"
+    },
+    "nd": {
+        "label": "Sprache",
+        "text": "Nord-Ndebele"
+    },
+    "yo": {
+        "label": "Sprache",
+        "text": "Yoruba"
+    },
+    "az": {
+        "label": "Sprache",
+        "text": "Aserbaidschanisch"
+    },
+    "nbxyz": {
+        "label": "Sprache",
+        "text": "Norwegisch Bokmål"
+    },
+    "it": {
+        "label": "Sprache",
+        "text": "Italienisch"
+    },
+    "sin": {
+        "label": "Sprache",
+        "text": "Singhalesisch"
+    },
+    "ab": {
+        "label": "Sprache",
+        "text": "Abchasisch"
+    },
+    "ti": {
+        "label": "Sprache",
+        "text": "Tigrinya"
+    },
+    "ml": {
+        "label": "Sprache",
+        "text": "Malayalam"
+    },
+    "rw": {
+        "label": "Sprache",
+        "text": "Kinyarwanda"
+    },
+    "nn": {
+        "label": "Sprache",
+        "text": "Norwegisch Nynorsk"
+    },
+    "lb": {
+        "label": "Sprache",
+        "text": "Luxemburgisch"
+    },
+    "fa": {
+        "label": "Sprache",
+        "text": "Persisch"
+    },
+    "ky": {
+        "label": "Sprache",
+        "text": "Kirgisisch"
+    },
+    "br": {
+        "label": "Sprache",
+        "text": "Bretonisch"
+    },
+    "tn": {
+        "label": "Sprache",
+        "text": "Tswana"
+    },
+    "ks": {
+        "label": "Sprache",
+        "text": "Kaschmiri"
+    },
+    "eu": {
+        "label": "Sprache",
+        "text": "Baskisch"
+    },
+    "be": {
+        "label": "Sprache",
+        "text": "Weißrussisch"
+    },
+    "sa": {
+        "label": "Sprache",
+        "text": "Sanskrit"
+    },
+    "pi": {
+        "label": "Sprache",
+        "text": "Pali"
+    },
+    "vi": {
+        "label": "Sprache",
+        "text": "Vietnamesisch"
+    },
+    "my": {
+        "label": "Sprache",
+        "text": "Birmanisch"
+    },
+    "os": {
+        "label": "Sprache",
+        "text": "Ossetisch"
+    },
+    "lo": {
+        "label": "Sprache",
+        "text": "Lao"
+    },
+    "fil": {
+        "label": "Sprache",
+        "text": "Philippinisch"
+    },
+    "cr": {
+        "label": "Sprache",
+        "text": "Kree"
+    },
+    "ht": {
+        "label": "Sprache",
+        "text": "Haitianisch"
+    },
+    "mh": {
+        "label": "Sprache",
+        "text": "Marshallisch"
+    },
+    "sw": {
+        "label": "Sprache",
+        "text": "Swahili"
+    },
+    "bo": {
+        "label": "Sprache",
+        "text": "Tibetisch"
+    },
+    "eo": {
+        "label": "Sprache",
+        "text": "Esperanto"
+    },
+    "pl": {
+        "label": "Sprache",
+        "text": "Polnisch"
+    },
+    "en": {
+        "label": "Sprache",
+        "text": "Englisch"
+    },
+    "ln": {
+        "label": "Sprache",
+        "text": "Lingala"
+    },
+    "tr": {
+        "label": "Sprache",
+        "text": "Türkisch"
+    },
+    "ka": {
+        "label": "Sprache",
+        "text": "Georgisch"
+    },
+    "ta": {
+        "label": "Sprache",
+        "text": "Tamil"
+    },
+    "ms": {
+        "label": "Sprache",
+        "text": "Malaiisch"
+    },
+    "lt": {
+        "label": "Sprache",
+        "text": "Litauisch"
+    },
+    "za": {
+        "label": "Sprache",
+        "text": "Zhuang"
+    },
+    "ru": {
+        "label": "Sprache",
+        "text": "Russisch"
+    },
+    "fy": {
+        "label": "Sprache",
+        "text": "Friesisch"
+    },
+    "zu": {
+        "label": "Sprache",
+        "text": "Zulu"
+    },
+    "vo": {
+        "label": "Sprache",
+        "text": "Volapük"
+    },
+    "ho": {
+        "label": "Sprache",
+        "text": "Hiri Motu"
+    },
+    "bh": {
+        "label": "Sprache",
+        "text": "Bihari"
+    },
+    "kn": {
+        "label": "Sprache",
+        "text": "Kannada"
+    },
+    "so": {
+        "label": "Sprache",
+        "text": "Somali"
+    },
+    "mr": {
+        "label": "Sprache",
+        "text": "Marathi"
+    },
+    "st": {
+        "label": "Sprache",
+        "text": "Südsotho"
+    },
+    "te": {
+        "label": "Sprache",
+        "text": "Telugu"
+    },
+    "ug": {
+        "label": "Sprache",
+        "text": "Uigurisch"
+    },
+    "kk": {
+        "label": "Sprache",
+        "text": "Kasachisch"
+    },
+    "kv": {
+        "label": "Sprache",
+        "text": "Komi"
+    },
+    "mk": {
+        "label": "Sprache",
+        "text": "Mazedonisch"
+    },
+    "is": {
+        "label": "Sprache",
+        "text": "Isländisch"
+    },
+    "gd": {
+        "label": "Sprache",
+        "text": "Schottisches Gälisch"
+    },
+    "ig": {
+        "label": "Sprache",
+        "text": "Igbo"
+    },
+    "mn": {
+        "label": "Sprache",
+        "text": "Mongolisch"
+    },
+    "da": {
+        "label": "Sprache",
+        "text": "Dänisch"
+    },
+    "su": {
+        "label": "Sprache",
+        "text": "Sundanesisch"
+    },
+    "fo": {
+        "label": "Sprache",
+        "text": "Färöisch"
+    },
+    "kj": {
+        "label": "Sprache",
+        "text": "Kwanyama"
+    }
+}
+     },
+     "vocabulary":{
+       "owner":"Eigentümer",
+       "areaCategory":"Bereich und Kategorie",
+       "ids":"IDs",
+       "date":"Datum",
+       "text":"Titel",
+       "suffix":"Suffix",
+       "suffixExt":"Suffix",
+       "extSuffix":"Dateiendung",
+       "extension":"Dateiendung",
+       "a":"Ausstellungen",
+       "r":"Restaurierungsmasnahmen",
+       "l":"Literatur",
+       "p":"Personen/Körperschaften",
+       "s":"Provenienzstationen",
+       "v":"Veranstaltungen",
+       "z":"Zubehör"
+     }
+}
