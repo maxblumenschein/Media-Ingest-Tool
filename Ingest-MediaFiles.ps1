@@ -143,13 +143,13 @@ function Write-IngestLog {
             Invoke-WithIoRetry -Action { $script:LogFileWriter.WriteLine($line) }
         }
         elseif ($script:LogFile) {
-            # Fallback for anywhere the persistent writer isn't set up yet.
-            # -ErrorAction Stop matters here: Add-Content's errors are
-            # non-terminating by default, which would otherwise print
-            # straight to the console AND skip the retry entirely, since
-            # try/catch (and Invoke-WithIoRetry's own catch) only ever
-            # sees terminating exceptions.
-            Invoke-WithIoRetry -Action { Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8 -ErrorAction Stop }
+            # Fallback for anywhere the persistent writer isn't set up
+            # yet. Not Add-Content - see Add-CsvRow for why.
+            Invoke-WithIoRetry -Action {
+                $fs = [System.IO.File]::Open($script:LogFile, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+                $w = New-Object System.IO.StreamWriter($fs, [System.Text.Encoding]::UTF8)
+                try { $w.WriteLine($line) } finally { $w.Dispose() }
+            }
         }
     }
     catch {
@@ -179,16 +179,31 @@ function ConvertTo-CsvField {
 function Add-CsvRow {
     # Used for the manifest, the per-run CSV report, and the -Verify
     # report - all real records, so unlike a routine log line this is
-    # retried but never silently swallowed: a transient NAS hiccup rides
-    # out the retry, but a genuine, persistent failure still surfaces as
-    # a real error rather than quietly losing a row.
+    # retried but never silently swallowed: a transient hiccup rides out
+    # the retry, but a genuine, persistent failure still surfaces as a
+    # real error rather than quietly losing a row.
+    #
+    # Deliberately NOT Add-Content. Seen directly on a real NAS:
+    # Add-Content -Encoding UTF8 failed appending to an already-created
+    # file with "the stream was not readable" (an ArgumentException,
+    # not an IOException - it wasn't even a locking issue, so the retry
+    # above couldn't have caught it anyway). Appending with an explicit
+    # -Encoding makes Add-Content reopen the file with extra read
+    # capability so it can sniff the file's existing encoding first;
+    # that reopen apparently didn't succeed cleanly on that NAS/SMB
+    # setup. Opening the file directly in FileMode.Append sidesteps this
+    # structurally: .NET rejects FileMode.Append combined with read
+    # access outright, so this path only ever requests - and only ever
+    # needs - write access, the same way Open-IngestLogFile already does
+    # for the main log (which never hit this failure).
     param([string]$Path, [string[]]$Fields)
     $line = ($Fields | ForEach-Object { ConvertTo-CsvField $_ }) -join ','
-    # -ErrorAction Stop matters here: Add-Content's errors are
-    # non-terminating by default, which bypasses try/catch (and so the
-    # retry above) entirely and just prints straight to the console -
-    # exactly the raw error block a NAS hiccup produced before this fix.
-    Invoke-WithIoRetry -Action { Add-Content -LiteralPath $Path -Value $line -Encoding UTF8 -ErrorAction Stop }
+    Invoke-WithIoRetry -Action {
+        $fs = [System.IO.File]::Open($Path, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+        $writer = New-Object System.IO.StreamWriter($fs, [System.Text.Encoding]::UTF8)
+        try { $writer.WriteLine($line) }
+        finally { $writer.Dispose() }
+    }
 }
 
 # ===========================================================================
@@ -681,7 +696,18 @@ function Sync-ManifestIndexLocked {
 
     foreach ($prefix in $byShard.Keys) {
         $shardPath = Join-Path $shardsDir "$prefix.csv"
-        Add-Content -LiteralPath $shardPath -Value $byShard[$prefix] -Encoding UTF8
+        # Not Add-Content - see Add-CsvRow for why (same -Encoding-on-append
+        # failure mode applies here, and shard files are repeatedly appended
+        # to across runs, not just created once).
+        $linesToWrite = $byShard[$prefix]
+        Invoke-WithIoRetry -Action {
+            $fs = [System.IO.File]::Open($shardPath, [System.IO.FileMode]::Append, [System.IO.FileAccess]::Write, [System.IO.FileShare]::ReadWrite)
+            $writer = New-Object System.IO.StreamWriter($fs, [System.Text.Encoding]::UTF8)
+            try {
+                foreach ($l in $linesToWrite) { $writer.WriteLine($l) }
+            }
+            finally { $writer.Dispose() }
+        }
     }
 
     Set-Content -LiteralPath $offsetPath -Value "$newOffset" -Encoding UTF8 -NoNewline
