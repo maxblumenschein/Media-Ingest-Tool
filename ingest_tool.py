@@ -1036,6 +1036,124 @@ def verify_archive(dest_root: Path, regex_url: str, cache_path: Path):
 
 
 # --------------------------------------------------------------------------
+# Archive rebuild (--rebuild): registers whatever is already sitting in an
+# archive (and its quarantine folder) into the manifest, without moving,
+# renaming, re-sorting, or validating any of it. Built for the case where
+# --dest already holds a valid-or-not archive that this tool never built,
+# or one whose manifest was lost - --verify would otherwise keep reporting
+# every one of those files as untracked forever. Does not need --source.
+# --------------------------------------------------------------------------
+
+def collect_rebuild_items(root: Path, standard, ignore_patterns) -> list:
+    """Walks `root` and returns every file and BagIt-style folder found
+    (the same unit-of-work the normal ingest uses), skipping this tool's
+    own _ingest_tool bookkeeping folder and anything matching
+    ignore_patterns."""
+    tool_dir_str = str((root / INGEST_TOOL_DIR_NAME).resolve())
+    items = []
+    for r, dirs, files in os.walk(root):
+        root_path = Path(r)
+        if str(root_path.resolve()) == tool_dir_str:
+            dirs[:] = []
+            continue
+        dirs[:] = [d for d in dirs if str((root_path / d).resolve()) != tool_dir_str]
+
+        bag_dirs = [d for d in dirs if standard.is_bag_dir(d)]
+        for d in bag_dirs:
+            items.append((root_path / d, True))
+            dirs.remove(d)
+
+        for fname in files:
+            if should_ignore(fname, ignore_patterns):
+                continue
+            items.append((root_path / fname, False))
+
+    return items
+
+
+def rebuild_archive(dest_root: Path, quarantine_root: Path, regex_url: str, cache_path: Path,
+                     ignore_patterns, dry_run: bool):
+    print()
+    print("=" * 70)
+    print(f" Rebuilding manifest for archive: {dest_root}")
+    print("=" * 70)
+    if dry_run:
+        print("DRY RUN - reporting what would be adopted; the manifest is not changed.")
+    else:
+        print("Scanning and registering anything not already tracked into the")
+        print("manifest. Nothing is copied, moved, renamed, or deleted.")
+    print()
+
+    migrate_legacy_layout(dest_root)
+    tool_dir = dest_root / INGEST_TOOL_DIR_NAME
+    write_ingest_tool_readme(tool_dir)
+
+    standard = Standard.load(regex_url, cache_path, force_refresh=False)
+
+    items = collect_rebuild_items(dest_root, standard, ignore_patterns)
+    # Only walked separately if it isn't already nested under dest_root -
+    # otherwise the scan above already covered it, and walking it again
+    # would just double-count every file inside it.
+    dest_resolved = str(dest_root.resolve())
+    if quarantine_root.is_dir():
+        quarantine_resolved = str(quarantine_root.resolve())
+        if quarantine_resolved != dest_resolved and not quarantine_resolved.startswith(dest_resolved + os.sep):
+            items += collect_rebuild_items(quarantine_root, standard, ignore_patterns)
+
+    total = len(items)
+    print(f"Found {total} item(s) on disk to check against the manifest.")
+    print()
+
+    manifest = Manifest(tool_dir / "manifest_cache.sqlite")
+    log_dir = tool_dir / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    report_path = log_dir / f"rebuild_{time.strftime('%Y%m%d-%H%M%S')}-{uuid.uuid4().hex[:6]}.csv"
+
+    adopted = 0
+    already_tracked = 0
+    errors = 0
+    activity = "Checking against manifest (dry run)" if dry_run else "Rebuilding manifest"
+
+    try:
+        with open(report_path, "w", newline="", encoding="utf-8") as report_file:
+            writer = csv.writer(report_file)
+            writer.writerow(["path", "sha256", "status", "notes"])
+
+            for i, (path, is_dir) in enumerate(items, start=1):
+                print_progress(activity, i, total, path.name)
+                name = path.name
+                try:
+                    file_hash = sha256_dir(path) if is_dir else sha256_file(path)
+                    size = dir_size(path) if is_dir else path.stat().st_size
+                except OSError as exc:
+                    errors += 1
+                    writer.writerow([str(path), "", "error", f"unreadable: {exc}"])
+                    continue
+
+                if manifest.lookup(file_hash, name):
+                    already_tracked += 1
+                    writer.writerow([str(path), file_hash, "already-tracked", ""])
+                    continue
+
+                adopted += 1
+                writer.writerow([str(path), file_hash, "dry-run-would-adopt" if dry_run else "adopted", ""])
+                if not dry_run:
+                    manifest.record(file_hash, name, "(pre-existing - adopted by --rebuild)", str(path), size)
+            clear_progress()
+    finally:
+        manifest.close()
+
+    print()
+    print(f"Already tracked: {already_tracked}")
+    print(f"{'Would be newly registered' if dry_run else 'Newly registered'}: {adopted}")
+    if errors:
+        print(f"Could not read: {errors}")
+    print()
+    print(f"Full report: {report_path}")
+    print("=" * 70)
+
+
+# --------------------------------------------------------------------------
 # CLI / main
 # --------------------------------------------------------------------------
 
@@ -1456,6 +1574,13 @@ def parse_args():
                         "file is still present and unmodified, and flags anything in the archive that "
                         "isn't in the manifest (e.g. added manually). Does not need --source; copies, "
                         "moves, or deletes nothing.")
+    p.add_argument("--rebuild", action="store_true",
+                   help="Registers every file already sitting in --dest (and its quarantine folder) "
+                        "into the manifest, without moving, renaming, re-sorting, or validating any of "
+                        "it. For an archive that already has valid (or not) content but no manifest - "
+                        "built elsewhere, by hand, or one whose manifest was lost. Does not need "
+                        "--source. Combine with --dry-run to preview what would be newly registered "
+                        "without touching the manifest.")
     p.add_argument("--quarantine", type=Path, default=None,
                    help="Where invalid files go. Default: <dest>/_quarantine")
     p.add_argument("--log-dir", type=Path, default=None,
@@ -1484,6 +1609,10 @@ def parse_args():
 def main():
     args = parse_args()
 
+    if args.verify and args.rebuild:
+        print("ERROR: --verify and --rebuild can't be combined - run them separately.", file=sys.stderr)
+        sys.exit(1)
+
     if args.verify:
         if not args.dest:
             print("ERROR: --verify requires --dest (the archive to check).", file=sys.stderr)
@@ -1494,6 +1623,24 @@ def main():
             sys.exit(1)
         cache_path = args.cache_dir / "medienstandard.json"
         verify_archive(dest_root, args.regex_url, cache_path)
+        return
+
+    if args.rebuild:
+        if not args.dest:
+            print("ERROR: --rebuild requires --dest (the archive to rebuild).", file=sys.stderr)
+            sys.exit(1)
+        dest_root = args.dest.resolve()
+        if not dest_root.is_dir():
+            print(f"ERROR: destination directory does not exist: {dest_root}", file=sys.stderr)
+            sys.exit(1)
+        quarantine_root = (args.quarantine or (dest_root / "_quarantine")).resolve()
+        cache_path = args.cache_dir / "medienstandard.json"
+        ignore_patterns = args.ignore.split(",") if args.ignore else []
+        try:
+            rebuild_archive(dest_root, quarantine_root, args.regex_url, cache_path, ignore_patterns, args.dry_run)
+        except RuntimeError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            sys.exit(2)
         return
 
     if args.source or args.dest:

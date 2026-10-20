@@ -62,6 +62,7 @@ python3 ingest_tool.py --source /Volumes/Source --dest /Volumes/Archive
 | `--source PATH` | `-Source PATH` | Source folder |
 | `--dest PATH` | `-Dest PATH` | Destination archive root |
 | `--verify` | `-Verify` | Read-only integrity check of `--dest` (no source needed) |
+| `--rebuild` | `-Rebuild` | Registers existing archive content into the manifest (no source needed) |
 | `--quarantine PATH` | `-Quarantine PATH` | Default: `<dest>\_quarantine` |
 | `--log-dir PATH` | `-LogDir PATH` | Default: `<dest>\_logs` |
 | `--dry-run` | `-DryRun` | Preview only |
@@ -93,6 +94,11 @@ Execution-policy blocked on Windows ("is not digitally signed")? Use
 - **`-Verify`** re-checks a whole archive later: confirms tracked files
   are still intact, and flags anything present that the manifest doesn't
   know about (e.g. added manually).
+- **`-Rebuild`** registers whatever's already sitting in an archive (and
+  its quarantine folder) into the manifest, without moving, renaming,
+  re-sorting, or validating any of it — for an archive built elsewhere,
+  by hand, or whose manifest was lost. Combine with `--dry-run` to
+  preview what would be newly registered first.
 
 ## Multiple people, same archive
 

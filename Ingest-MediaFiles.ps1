@@ -60,6 +60,7 @@ param(
     [string]$CacheDir = $(if ($env:LOCALAPPDATA) { Join-Path $env:LOCALAPPDATA "medienstandard" } else { Join-Path $HOME ".cache/medienstandard" }),
     [switch]$RefreshStandard,
     [switch]$Verify,
+    [switch]$Rebuild,
     [switch]$DryRun,
     [switch]$DeleteSource,
     [switch]$DeleteDuplicates,
@@ -1313,6 +1314,141 @@ function Invoke-ArchiveVerification {
 }
 
 # ===========================================================================
+# Archive rebuild (-Rebuild): registers whatever is already sitting in an
+# archive (and its quarantine folder) into the manifest, without moving,
+# renaming, re-sorting, or validating any of it. Built for the case where
+# -Dest already holds a valid-or-not archive this tool never built, or one
+# whose manifest was lost - -Verify would otherwise keep reporting every
+# one of those files as untracked forever. Does not need -Source.
+# ===========================================================================
+
+function Get-RebuildItemList {
+    # Same shape as Get-IngestItemList, but walks an archive (or its
+    # quarantine folder) directly rather than a source tree, and skips
+    # this tool's own _ingest_tool bookkeeping folder instead of a
+    # separate source/dest pair.
+    param([string]$CurrentDir, [object]$Standard, [string[]]$IgnorePatternsArr,
+          [string]$ToolDirNormalized, [System.Collections.Generic.List[object]]$Items)
+
+    if ($CurrentDir.Equals($ToolDirNormalized, [System.StringComparison]::OrdinalIgnoreCase)) { return }
+
+    $children = Get-ChildItem -LiteralPath $CurrentDir -Force -ErrorAction SilentlyContinue
+    if (-not $children) { return }
+
+    $dirs  = $children | Where-Object { $_.PSIsContainer }
+    $files = $children | Where-Object { -not $_.PSIsContainer }
+
+    foreach ($d in $dirs) {
+        if ($d.FullName.Equals($ToolDirNormalized, [System.StringComparison]::OrdinalIgnoreCase)) { continue }
+        if ($Standard.IncludeDirs.Match($d.Name).Success) {
+            $Items.Add([pscustomobject]@{ Path = $d.FullName; IsDir = $true })
+        }
+        else {
+            Get-RebuildItemList -CurrentDir $d.FullName -Standard $Standard -IgnorePatternsArr $IgnorePatternsArr -ToolDirNormalized $ToolDirNormalized -Items $Items
+        }
+    }
+
+    foreach ($f in $files) {
+        if (Test-ShouldIgnore -Name $f.Name -Patterns $IgnorePatternsArr) { continue }
+        $Items.Add([pscustomobject]@{ Path = $f.FullName; IsDir = $false })
+    }
+}
+
+function Invoke-ArchiveRebuild {
+    param([string]$DestRoot, [string]$QuarantineRoot, [string]$IgnorePatternsArg, [bool]$DryRun)
+
+    Write-Host ""
+    Write-Host "=================================================================="
+    Write-Host " Rebuilding manifest for archive: $DestRoot"
+    Write-Host "=================================================================="
+    if ($DryRun) {
+        Write-Host "DRY RUN - reporting what would be adopted; the manifest is not changed."
+    }
+    else {
+        Write-Host "Scanning and registering anything not already tracked into the"
+        Write-Host "manifest. Nothing is copied, moved, renamed, or deleted."
+    }
+    Write-Host ""
+
+    Move-LegacyArchiveLayout -DestRoot $DestRoot
+    $toolDir = Join-Path $DestRoot "_ingest_tool"
+    Set-IngestToolReadme -ToolDir $toolDir
+
+    $standard = Get-Standard -Url $RegexUrl -CachePath (Join-Path $CacheDir "medienstandard.json") -Force $false
+    $ignoreArr = $IgnorePatternsArg -split ','
+
+    $items = New-Object System.Collections.Generic.List[object]
+    Get-RebuildItemList -CurrentDir $DestRoot -Standard $standard -IgnorePatternsArr $ignoreArr -ToolDirNormalized $toolDir -Items $items
+
+    # Only walked separately if it isn't already nested under $DestRoot -
+    # otherwise the scan above already covered it, and walking it again
+    # would just double-count every file inside it.
+    if ((Test-Path -LiteralPath $QuarantineRoot -PathType Container) -and
+        -not $QuarantineRoot.Equals($DestRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
+        -not $QuarantineRoot.StartsWith(($DestRoot.TrimEnd('\', '/') + [System.IO.Path]::DirectorySeparatorChar), [System.StringComparison]::OrdinalIgnoreCase)) {
+        Get-RebuildItemList -CurrentDir $QuarantineRoot -Standard $standard -IgnorePatternsArr $ignoreArr -ToolDirNormalized $toolDir -Items $items
+    }
+
+    $total = $items.Count
+    Write-Host "Found $total item(s) on disk to check against the manifest."
+    Write-Host ""
+
+    $script:ManifestPath = Join-Path $toolDir "manifest.csv"
+    Initialize-Manifest -Path $script:ManifestPath
+
+    $logDir = Join-Path $toolDir "logs"
+    if (-not (Test-Path -LiteralPath $logDir)) { New-Item -ItemType Directory -Path $logDir -Force | Out-Null }
+    $reportPath = Join-Path $logDir ("rebuild_" + (Get-Date -Format "yyyyMMdd-HHmmss") + "-" + [System.Guid]::NewGuid().ToString("N").Substring(0, 6) + ".csv")
+    Add-CsvRow -Path $reportPath -Fields @("path", "sha256", "status", "notes")
+
+    $adopted = 0
+    $alreadyTracked = 0
+    $errorCount = 0
+    $activity = if ($DryRun) { "Checking against manifest (dry run)" } else { "Rebuilding manifest" }
+
+    $i = 0
+    foreach ($item in $items) {
+        $i++
+        $percent = if ($total -gt 0) { [int](($i / $total) * 100) } else { 100 }
+        Write-Progress -Activity $activity -Status "$i of $total" -PercentComplete $percent -CurrentOperation (Split-Path $item.Path -Leaf)
+
+        $name = Split-Path $item.Path -Leaf
+        try {
+            $hashValue = if ($item.IsDir) { Get-Sha256Dir $item.Path } else { Get-Sha256File $item.Path }
+            $size = if ($item.IsDir) { Get-DirSize $item.Path } else { (Get-Item -LiteralPath $item.Path -Force).Length }
+        }
+        catch {
+            $errorCount++
+            Add-CsvRow -Path $reportPath -Fields @($item.Path, "", "error", "unreadable: $($_.Exception.Message)")
+            continue
+        }
+
+        $existing = Get-ManifestEntry -HashValue $hashValue -Name $name
+        if ($existing) {
+            $alreadyTracked++
+            Add-CsvRow -Path $reportPath -Fields @($item.Path, $hashValue, "already-tracked", "")
+            continue
+        }
+
+        $adopted++
+        $status = if ($DryRun) { "dry-run-would-adopt" } else { "adopted" }
+        Add-CsvRow -Path $reportPath -Fields @($item.Path, $hashValue, $status, "")
+        if (-not $DryRun) {
+            Add-ManifestEntry -HashValue $hashValue -Name $name -SourcePath "(pre-existing - adopted by -Rebuild)" -DestPath $item.Path -Size $size
+        }
+    }
+    Write-Progress -Activity $activity -Completed
+
+    Write-Host ""
+    Write-Host "Already tracked: $alreadyTracked"
+    Write-Host "$(if ($DryRun) { 'Would be newly registered' } else { 'Newly registered' }): $adopted"
+    if ($errorCount -gt 0) { Write-Host "Could not read: $errorCount" -ForegroundColor Yellow }
+    Write-Host ""
+    Write-Host "Full report: $reportPath"
+    Write-Host "=================================================================="
+}
+
+# ===========================================================================
 # Interactive wizard - plain questions, sensible defaults, always previews
 # ===========================================================================
 #
@@ -1619,9 +1755,16 @@ function Start-Wizard {
 
 # ===========================================================================
 # Entry point: -Verify -> read-only archive check (needs -Dest only).
-# Explicit -Source/-Dest -> classic single-pass CLI behaviour for power
-# users and scripts. Neither given -> interactive wizard.
+# -Rebuild -> registers pre-existing archive content into the manifest
+# (needs -Dest only). Explicit -Source/-Dest -> classic single-pass CLI
+# behaviour for power users and scripts. Neither given -> interactive
+# wizard.
 # ===========================================================================
+
+if ($Verify -and $Rebuild) {
+    Write-Error "-Verify and -Rebuild can't be combined - run them separately."
+    exit 1
+}
 
 if ($Verify) {
     if (-not $Dest) {
@@ -1640,6 +1783,38 @@ if ($Verify) {
     # standard loads) has somewhere to write.
     Open-IngestLogFile -Path (Join-Path $verifyLogDir "verify_startup.log")
     Invoke-ArchiveVerification -DestRoot $destResolvedForVerify
+    Close-IngestLogFile
+}
+elseif ($Rebuild) {
+    if (-not $Dest) {
+        Write-Error "-Rebuild requires -Dest (the archive to rebuild)."
+        exit 1
+    }
+    if (-not (Test-Path -LiteralPath $Dest -PathType Container)) {
+        Write-Error "Destination not found: $Dest"
+        exit 1
+    }
+    $destResolvedForRebuild = (Resolve-Path -LiteralPath $Dest).ProviderPath
+    if (-not $Quarantine) { $Quarantine = Join-Path $destResolvedForRebuild "_quarantine" }
+    $quarantineResolvedForRebuild = if (Test-Path -LiteralPath $Quarantine -PathType Container) {
+        (Resolve-Path -LiteralPath $Quarantine).ProviderPath
+    } else {
+        $Quarantine
+    }
+    Move-LegacyArchiveLayout -DestRoot $destResolvedForRebuild
+    $rebuildLogDir = Join-Path $destResolvedForRebuild "_ingest_tool\logs"
+    if (-not (Test-Path -LiteralPath $rebuildLogDir)) { New-Item -ItemType Directory -Path $rebuildLogDir -Force | Out-Null }
+    # A throwaway log file just so Write-IngestLog (used while the naming
+    # standard loads) has somewhere to write.
+    Open-IngestLogFile -Path (Join-Path $rebuildLogDir "rebuild_startup.log")
+    try {
+        Invoke-ArchiveRebuild -DestRoot $destResolvedForRebuild -QuarantineRoot $quarantineResolvedForRebuild -IgnorePatternsArg $IgnorePatterns -DryRun $DryRun.IsPresent
+    }
+    catch {
+        Write-IngestLog "ERROR" $_.Exception.Message
+        Close-IngestLogFile
+        exit 2
+    }
     Close-IngestLogFile
 }
 elseif ($PSBoundParameters.ContainsKey('Source') -or $PSBoundParameters.ContainsKey('Dest')) {
